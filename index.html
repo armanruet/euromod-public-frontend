@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EUROMOD Analysis - Public Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .output-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .status-message {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .results {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #dc3545;
+        }
+
+        .success {
+            color: #155724;
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .cache-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 EUROMOD Analysis</h1>
+            <p>Public Platform for Economic Policy Analysis</p>
+        </div>
+
+        <div class="form-container">
+            <form id="euromodForm">
+                <div class="form-group">
+                    <label for="baseSystem">BASE SYSTEM:</label>
+                    <input type="text" id="baseSystem" name="baseSystem" placeholder="e.g., LU_2024" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="reformSystem">REFORM SYSTEM:</label>
+                    <input type="text" id="reformSystem" name="reformSystem" placeholder="e.g., LU_2024_UBI" required>
+                </div>
+
+                <button type="submit" id="executeBtn">
+                    <span id="btnText">🚀 Execute EUROMOD Analysis</span>
+                    <span id="btnLoading" class="loading" style="display: none;"></span>
+                </button>
+            </form>
+
+            <div id="output" class="output-container">
+                <div class="status-message">Ready to execute EUROMOD analysis...</div>
+            </div>
+
+            <div id="cacheInfo" class="cache-info" style="display: none;">
+                <strong>💾 Cache Status:</strong> <span id="cacheStatus">Checking...</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Powered by EUROMOD Cloud API | Real-time Economic Policy Analysis</p>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Update this URL to your cloud backend
+        const CLOUD_API_URL = 'https://euromod-cloud-backend.railway.app'; // Update this!
+        
+        let currentJobId = null;
+        let pollingInterval = null;
+
+        // DOM elements
+        const form = document.getElementById('euromodForm');
+        const executeBtn = document.getElementById('executeBtn');
+        const btnText = document.getElementById('btnText');
+        const btnLoading = document.getElementById('btnLoading');
+        const output = document.getElementById('output');
+        const cacheInfo = document.getElementById('cacheInfo');
+        const cacheStatus = document.getElementById('cacheStatus');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkCloudAPIHealth();
+            updateCacheStats();
+        });
+
+        // Form submission
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const baseSystem = document.getElementById('baseSystem').value.trim();
+            const reformSystem = document.getElementById('reformSystem').value.trim();
+            
+            if (!baseSystem || !reformSystem) {
+                showError('Please enter both BASE SYSTEM and REFORM SYSTEM values.');
+                return;
+            }
+            
+            await executeEuromodAnalysis(baseSystem, reformSystem);
+        });
+
+        async function executeEuromodAnalysis(baseSystem, reformSystem) {
+            try {
+                // Update UI
+                setLoading(true);
+                showStatus('🚀 Starting EUROMOD analysis...');
+                
+                // Make API request
+                const response = await fetch(`${CLOUD_API_URL}/run_euromod`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        base_system: baseSystem,
+                        reform_system: reformSystem
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.job_id === 'cached') {
+                    // Cached result
+                    showSuccess('⚡ Results retrieved from cache!');
+                    displayResults(data);
+                } else {
+                    // New analysis
+                    currentJobId = data.job_id;
+                    showStatus('🔄 Analysis started. Polling for results...');
+                    startPolling();
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError(`❌ Error: ${error.message}`);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function startPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${CLOUD_API_URL}/job_status/${currentJobId}`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Update progress
+                    if (data.progress !== undefined) {
+                        updateProgress(data.progress, data.message);
+                    }
+                    
+                    // Check if completed
+                    if (data.status === 'completed') {
+                        clearInterval(pollingInterval);
+                        pollingInterval = null;
+                        
+                        if (data.results) {
+                            showSuccess('✅ Analysis completed successfully!');
+                            displayResults(data.results);
+                        } else {
+                            showError('❌ Analysis completed but no results found.');
+                        }
+                    } else if (data.status === 'error') {
+                        clearInterval(pollingInterval);
+                        pollingInterval = null;
+                        showError(`❌ Analysis failed: ${data.message}`);
+                    }
+                    
+                } catch (error) {
+                    console.error('Polling error:', error);
+                    clearInterval(pollingInterval);
+                    pollingInterval = null;
+                    showError(`❌ Error polling for results: ${error.message}`);
+                }
+            }, 2000); // Poll every 2 seconds
+        }
+
+        function displayResults(results) {
+            if (results.status === 'error') {
+                showError(`❌ Analysis Error: ${results.error}`);
+                return;
+            }
+            
+            const resultsHtml = `
+                <div class="results">
+                    <h3>📊 EUROMOD Analysis Results</h3>
+                    
+                    <div class="result-item">
+                        <div class="result-label">Direct Taxes (Baseline):</div>
+                        <div class="result-value">€${results.direct_taxes_baseline?.toLocaleString() || 'N/A'}</div>
+                    </div>
+                    
+                    <div class="result-item">
+                        <div class="result-label">Direct Taxes (Reform):</div>
+                        <div class="result-value">€${results.direct_taxes_reform?.toLocaleString() || 'N/A'}</div>
+                    </div>
+                    
+                    <div class="result-item">
+                        <div class="result-label">Total Household Market Incomes (Baseline):</div>
+                        <div class="result-value">€${results.total_household_market_incomes_baseline?.toLocaleString() || 'N/A'}</div>
+                    </div>
+                    
+                    <div class="result-item">
+                        <div class="result-label">Total Household Market Incomes (Reform):</div>
+                        <div class="result-value">€${results.total_household_market_incomes_reform?.toLocaleString() || 'N/A'}</div>
+                    </div>
+                    
+                    <div class="result-item">
+                        <div class="result-label">Analysis Timestamp:</div>
+                        <div class="result-value">${new Date(results.timestamp).toLocaleString()}</div>
+                    </div>
+                </div>
+            `;
+            
+            output.innerHTML = resultsHtml;
+        }
+
+        function updateProgress(progress, message) {
+            const progressHtml = `
+                <div class="status-message">${message}</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${progress}%"></div>
+                </div>
+                <div class="status-message">Progress: ${progress}%</div>
+            `;
+            output.innerHTML = progressHtml;
+        }
+
+        function showStatus(message) {
+            output.innerHTML = `<div class="status-message">${message}</div>`;
+        }
+
+        function showSuccess(message) {
+            output.innerHTML = `<div class="success">${message}</div>`;
+        }
+
+        function showError(message) {
+            output.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        function setLoading(loading) {
+            executeBtn.disabled = loading;
+            btnText.style.display = loading ? 'none' : 'inline';
+            btnLoading.style.display = loading ? 'inline-block' : 'none';
+        }
+
+        async function checkCloudAPIHealth() {
+            try {
+                const response = await fetch(`${CLOUD_API_URL}/health`);
+                if (response.ok) {
+                    console.log('Cloud API is healthy');
+                } else {
+                    console.warn('Cloud API health check failed');
+                }
+            } catch (error) {
+                console.error('Cloud API health check error:', error);
+            }
+        }
+
+        async function updateCacheStats() {
+            try {
+                const response = await fetch(`${CLOUD_API_URL}/cache_stats`);
+                if (response.ok) {
+                    const stats = await response.json();
+                    cacheStatus.textContent = `${stats.cache_size} cached analyses, ${stats.active_jobs} active jobs`;
+                    cacheInfo.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Cache stats error:', error);
+            }
+        }
+    </script>
+</body>
+</html> 
