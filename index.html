@@ -284,23 +284,39 @@
                 setLoading(true);
                 showStatus('🚀 Starting EUROMOD analysis...');
                 
+                // Debug logging
+                console.log('🔍 DEBUG: Starting EUROMOD analysis');
+                console.log('🔍 DEBUG: Base System:', baseSystem);
+                console.log('🔍 DEBUG: Reform System:', reformSystem);
+                console.log('🔍 DEBUG: API URL:', CLOUD_API_URL);
+                
+                const requestBody = {
+                    base_system: baseSystem,
+                    reform_system: reformSystem
+                };
+                console.log('🔍 DEBUG: Request body:', requestBody);
+                
                 // Make API request
+                console.log('🔍 DEBUG: Making fetch request...');
                 const response = await fetch(`${CLOUD_API_URL}/run_euromod`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        base_system: baseSystem,
-                        reform_system: reformSystem
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
+                console.log('🔍 DEBUG: Response status:', response.status);
+                console.log('🔍 DEBUG: Response ok:', response.ok);
+
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorText = await response.text();
+                    console.log('🔍 DEBUG: Error response text:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
                 }
 
                 const data = await response.json();
+                console.log('🔍 DEBUG: Response data:', data);
                 
                 if (data.job_id === 'cached') {
                     // Cached result
