@@ -200,6 +200,14 @@
             color: #6c757d;
             font-size: 0.9em;
         }
+
+        .connection-info {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ffc107;
+        }
     </style>
 </head>
 <body>
@@ -210,6 +218,13 @@
         </div>
 
         <div class="form-container">
+            <div class="connection-info">
+                <strong>🔗 Connection Status:</strong> 
+                <span id="connectionStatus">Checking...</span>
+                <br>
+                <small>If you see mixed content errors, please allow insecure content or use a different browser.</small>
+            </div>
+
             <form id="euromodForm">
                 <div class="form-group">
                     <label for="baseSystem">BASE SYSTEM:</label>
@@ -242,9 +257,14 @@
     </div>
 
     <script>
-        // Configuration - Update this URL to your cloud backend
-        const CLOUD_API_URL = 'http://91.99.219.28:8001';
+        // Configuration - Multiple fallback URLs
+        const API_URLS = [
+            'http://91.99.219.28:8001',
+            'http://91.99.219.28:8080',
+            'http://91.99.219.28:443'
+        ];
         
+        let currentApiUrl = null;
         let currentJobId = null;
         let pollingInterval = null;
 
@@ -256,16 +276,52 @@
         const output = document.getElementById('output');
         const cacheInfo = document.getElementById('cacheInfo');
         const cacheStatus = document.getElementById('cacheStatus');
+        const connectionStatus = document.getElementById('connectionStatus');
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            checkCloudAPIHealth();
-            updateCacheStats();
+            findWorkingApiUrl();
         });
+
+        // Find working API URL
+        async function findWorkingApiUrl() {
+            connectionStatus.textContent = 'Testing connections...';
+            
+            for (const url of API_URLS) {
+                try {
+                    console.log(`Testing connection to: ${url}`);
+                    const response = await fetch(`${url}/health`, { 
+                        method: 'GET',
+                        mode: 'cors',
+                        timeout: 5000
+                    });
+                    
+                    if (response.ok) {
+                        currentApiUrl = url;
+                        connectionStatus.textContent = `Connected to: ${url}`;
+                        connectionStatus.style.color = '#28a745';
+                        console.log(`✅ Connected to: ${url}`);
+                        updateCacheStats();
+                        return;
+                    }
+                } catch (error) {
+                    console.log(`❌ Failed to connect to: ${url} - ${error.message}`);
+                }
+            }
+            
+            connectionStatus.textContent = 'No working connection found. Please check server status.';
+            connectionStatus.style.color = '#dc3545';
+            console.error('❌ No working API URL found');
+        }
 
         // Form submission
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            if (!currentApiUrl) {
+                showError('❌ No working API connection found. Please check server status.');
+                return;
+            }
             
             const baseSystem = document.getElementById('baseSystem').value.trim();
             const reformSystem = document.getElementById('reformSystem').value.trim();
@@ -288,7 +344,7 @@
                 console.log('🔍 DEBUG: Starting EUROMOD analysis');
                 console.log('🔍 DEBUG: Base System:', baseSystem);
                 console.log('🔍 DEBUG: Reform System:', reformSystem);
-                console.log('🔍 DEBUG: API URL:', CLOUD_API_URL);
+                console.log('🔍 DEBUG: API URL:', currentApiUrl);
                 
                 const requestBody = {
                     base_system: baseSystem,
@@ -298,7 +354,7 @@
                 
                 // Make API request
                 console.log('🔍 DEBUG: Making fetch request...');
-                const response = await fetch(`${CLOUD_API_URL}/run_euromod`, {
+                const response = await fetch(`${currentApiUrl}/run_euromod`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -344,7 +400,7 @@
             
             pollingInterval = setInterval(async () => {
                 try {
-                    const response = await fetch(`${CLOUD_API_URL}/job_status/${currentJobId}`);
+                    const response = await fetch(`${currentApiUrl}/job_status/${currentJobId}`);
                     
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -452,22 +508,11 @@
             btnLoading.style.display = loading ? 'inline-block' : 'none';
         }
 
-        async function checkCloudAPIHealth() {
-            try {
-                const response = await fetch(`${CLOUD_API_URL}/health`);
-                if (response.ok) {
-                    console.log('Cloud API is healthy');
-                } else {
-                    console.warn('Cloud API health check failed');
-                }
-            } catch (error) {
-                console.error('Cloud API health check error:', error);
-            }
-        }
-
         async function updateCacheStats() {
+            if (!currentApiUrl) return;
+            
             try {
-                const response = await fetch(`${CLOUD_API_URL}/cache_stats`);
+                const response = await fetch(`${currentApiUrl}/cache_stats`);
                 if (response.ok) {
                     const stats = await response.json();
                     cacheStatus.textContent = `${stats.cache_size} cached analyses, ${stats.active_jobs} active jobs`;
@@ -479,4 +524,4 @@
         }
     </script>
 </body>
-</html>
+</html> 
